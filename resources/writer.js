@@ -6,26 +6,25 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-var vm = require('vm');
-var webpack = require('webpack');
-var React = require('react');
-var ReactDOM = require('react-dom/server')
-var fs = require('fs');
-var yaml = require('js-yaml');
-var path = require('path');
-var less = require('less');
-var renderReactPage = require('./renderReactPage');
-import { endsWith } from './util';
-
+var vm = require("vm");
+var webpack = require("webpack");
+var React = require("react");
+var ReactDOM = require("react-dom/server");
+var fs = require("fs");
+var yaml = require("js-yaml");
+var path = require("path");
+var less = require("less");
+var renderReactPage = require("./renderReactPage");
+import { endsWith } from "./util";
 
 module.exports = writer;
 
 async function writer(buildDir, file, site) {
   var writePath = getWritePath(buildDir, file);
-  console.log('  writing', file.relPath);
+  console.log("  writing", file.relPath);
 
   // Render Less file
-  if (endsWith(file.absPath, '.less')) {
+  if (endsWith(file.absPath, ".less")) {
     const input = await readFile(file.absPath);
     const output = await less.render(input, { filename: file.absPath });
     return await writeFile(writePath, output.css);
@@ -43,13 +42,15 @@ async function writer(buildDir, file, site) {
   var data;
 
   // Render JS file
-  if (endsWith(file.relPath, '.html.js') || endsWith(file.relPath, '.xml.js')) {
+  if (endsWith(file.relPath, ".html.js") || endsWith(file.relPath, ".xml.js")) {
     data = renderReactPage({
       component: require(path.resolve(file.absPath)),
       props: { site, page: file }
     });
-  } else if (endsWith(file.relPath, '.md') ||
-             endsWith(file.relPath, '.markdown')) {
+  } else if (
+    endsWith(file.relPath, ".md") ||
+    endsWith(file.relPath, ".markdown")
+  ) {
     var absLayoutPath = path.join(path.dirname(file.absPath), file.layout);
     data = renderReactPage({
       component: require(path.resolve(absLayoutPath)),
@@ -75,25 +76,29 @@ function writeScript(writePath, file, fileData) {
     var renderHere;
     var relRequire;
 
-    var withInitialRenders = fileData.replace(SCRIPT_RX, function (_, scriptData) {
+    var withInitialRenders = fileData.replace(SCRIPT_RX, function(
+      _,
+      scriptData
+    ) {
       if (!script) {
         script = `var id = 100;
           function renderHere(element) {
             ReactDOM.render(element, document.getElementById('r' + (++id)));
           }`;
-        renderHere = function (element) {
-          renders += `<div id="r${++id}">${ReactDOM.renderToString(element)}</div>`;
+        renderHere = function(element) {
+          renders += `<div id="r${++id}">${ReactDOM.renderToString(
+            element
+          )}</div>`;
         };
-        relRequire = reqPath => require(
-          reqPath[0] === '.' ?
-            path.resolve(path.dirname(file.absPath), reqPath) :
-            reqPath
-        );
+        relRequire = reqPath =>
+          require(reqPath[0] === "."
+            ? path.resolve(path.dirname(file.absPath), reqPath)
+            : reqPath);
       }
-      var es5 = require('babel-core').transform(scriptData).code;
+      var es5 = require("babel-core").transform(scriptData).code;
       es5 = `(function () {\n${es5}\n}());\n`;
       script += es5;
-      renders = '';
+      renders = "";
       var realRequire = require;
       global.require = relRequire;
       global.renderHere = renderHere;
@@ -114,8 +119,10 @@ function writeScript(writePath, file, fileData) {
       return resolve(withInitialRenders);
     }
 
-
-    var tmpFile = path.join(path.dirname(file.absPath), '.tmp.js.' + path.basename(file.absPath));
+    var tmpFile = path.join(
+      path.dirname(file.absPath),
+      ".tmp.js." + path.basename(file.absPath)
+    );
 
     fs.writeFile(tmpFile, script, err => {
       if (err) {
@@ -128,55 +135,54 @@ function writeScript(writePath, file, fileData) {
         entry: tmpFile,
         output: {
           path: path.dirname(writePath),
-          filename: path.basename(writePath) + '.[hash].js'
+          filename: path.basename(writePath) + ".[hash].js"
         },
         externals: {
-          'react': 'var React'
+          react: "var React"
         },
         resolveLoader: {
-          root: path.join(__dirname, '../node_modules')
+          root: path.join(__dirname, "../node_modules")
         },
         module: {
           loaders: [
             {
               test: /\.jsx?$/,
               exclude: /(node_modules|bower_components)/,
-              loader: 'babel-loader',
+              loader: "babel-loader",
               query: {
-                optional: [ 'runtime' ],
+                optional: ["runtime"]
               }
             }
           ]
         }
       });
 
-      pack.run(function (err, stats) {
+      pack.run(function(err, stats) {
         fs.unlink(tmpFile, () => {
-
           if (err) {
             return reject(err);
           }
 
           resolve(
             withInitialRenders.replace(
-              '</body></html>',
+              "</body></html>",
               `<script src="/vendor/react-15.0.1.min.js"></script>` +
-              `<script src="/vendor/react-dom-15.0.1.min.js"></script>` +
-              `<script src="${path.basename(writePath)}.${stats.hash}.js"></script></body></html>`
+                `<script src="/vendor/react-dom-15.0.1.min.js"></script>` +
+                `<script src="${path.basename(writePath)}.${
+                  stats.hash
+                }.js"></script></body></html>`
             )
           );
         });
       });
-
     });
-
   });
 }
 
 function getWritePath(buildDir, file) {
   var writePath = file.url;
-  if (endsWith(writePath, '/')) {
-    writePath = path.join(writePath, 'index.html');
+  if (endsWith(writePath, "/")) {
+    writePath = path.join(writePath, "index.html");
   }
   return path.join(buildDir, writePath.slice(1));
 }
@@ -184,8 +190,9 @@ function getWritePath(buildDir, file) {
 // Simple Promise wrapper around fs.writeFile
 function readFile(filePath, fmt) {
   return new Promise((resolve, reject) =>
-    fs.readFile(filePath, fmt || 'utf8', (err, results) =>
-      err ? reject(err) : resolve(results))
+    fs.readFile(filePath, fmt || "utf8", (err, results) =>
+      err ? reject(err) : resolve(results)
+    )
   );
 }
 
@@ -198,28 +205,28 @@ async function writeFile(filePath, data) {
 // Simple Promise wrapper around fs.writeFile
 function _writeFile(filePath, data) {
   return new Promise((resolve, reject) =>
-    fs.writeFile(filePath, data, err => err ? reject(err) : resolve())
+    fs.writeFile(filePath, data, err => (err ? reject(err) : resolve()))
   );
 }
 
 function promisePipeEnds(pipe) {
   return new Promise((resolve, reject) => {
-    pipe.on('close', resolve).on('error', reject);
+    pipe.on("close", resolve).on("error", reject);
   });
 }
 
 function promiseDirExists(dir) {
   return new Promise((resolve, reject) => {
-    mkdirp(dir, err => err ? reject(err) : resolve());
+    mkdirp(dir, err => (err ? reject(err) : resolve()));
   });
 }
 
 function mkdirp(p, cb) {
   p = path.resolve(p);
   fs.mkdir(p, 511 ^ process.umask(), error => {
-    if (error && error.code === 'EEXIST') {
+    if (error && error.code === "EEXIST") {
       return cb();
-    } else if (error && error.code === 'ENOENT') {
+    } else if (error && error.code === "ENOENT") {
       mkdirp(path.dirname(p), error2 => {
         return error2 ? cb(error2) : mkdirp(p, cb);
       });

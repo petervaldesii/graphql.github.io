@@ -21,8 +21,8 @@ var pwd = process.env.PWD;
 var sourceDir = process.env.npm_package_site_source || './';
 var buildDir = process.env.npm_package_site_build || './_build';
 
-var SITE_ROOT = path.resolve(pwd, sourceDir);
-var BUILD_ROOT = path.resolve(pwd, buildDir);
+var SITE_ROOT = path.resolve( sourceDir);
+var BUILD_ROOT = path.resolve( buildDir);
 
 async function build(filter) {
   console.log('building...');

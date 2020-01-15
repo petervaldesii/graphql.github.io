@@ -3,10 +3,16 @@
   "private": true,
   "version": "0.0.0",
   "scripts": {
-    "start": "rm -rf build && babel-node resources/server.js",
+    "clean": "rimraf ./build",
+    "start:win": "npm-run-all clean server:win",
+    "server": "rm -rf build && babel-node resources/server.js",
+    "server:win": " ./node_modules/.bin/babel-node resources/server.js",
     "build": "rm -rf build && babel-node resources/build.js",
+    "build:win": " ./node_modules/.bin/babel-node resources/build.js",
     "watch": "rm -rf build && babel-node resources/watch.js",
-    "test": "npm run build"
+    "watch:win": " ./node_modules/.bin/babel-node resources/watch.js",
+    "test": "npm run build",
+    "test:win": "npm run build:win"
   },
   "babel": {
     "optional": [
@@ -25,9 +31,11 @@
     "babel-runtime": "^5.8.20",
     "express": "^4.13.3",
     "js-yaml": "^3.13.1",
+    "npm-run-all": "^4.1.5",
     "less": "^2.7.1",
     "react": "15.3.1",
     "react-dom": "15.3.1",
+    "rimraf": "^3.0.0",
     "sane": "^1.2.0",
     "webpack": "^1.12.1"
   },
